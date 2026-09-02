@@ -97,7 +97,11 @@ sudo cp /old/nextcloud/config/config.php /var/www/nextcloud/config/
 sudo chown -R www-data:www-data /var/www/nextcloud
 ```
 
-Edit the copied `config.php`: update `dbname`/`dbuser`/`dbpassword` if they changed, verify `datadirectory`, and confirm `trusted_domains` includes the public hostname.
+Edit the copied `config.php`: update `dbname`/`dbuser`/`dbpassword` if they changed, verify `datadirectory`, and confirm `trusted_domains` includes the public hostname. Then make Nextcloud's file cache match the restored files — without this, migrated files are invisible in the web UI:
+
+```bash
+sudo -u www-data php /var/www/nextcloud/occ files:scan --all
+```
 
 ## 8. Apache VirtualHost
 
@@ -127,11 +131,21 @@ Set `ServerName` explicitly — mismatched names cause the classic warnings in N
 
 ## 9. Let's Encrypt
 
+The deployed instance uses the **webroot** method — it keeps vhost files hand-managed and only needs the ACME path served on port 80 (the HTTP vhost template above already excludes `.well-known/acme-challenge/` from the redirect):
+
 ```bash
-sudo apt install -y certbot python3-certbot-apache
-sudo certbot --apache -d <nextcloud_hostname>
+sudo apt install -y certbot
+sudo certbot certonly --webroot -w /var/www/nextcloud -d <nextcloud_hostname>
+```
+
+Make renewals reload Apache so the new cert is picked up:
+
+```bash
+sudo certbot renew --deploy-hook "systemctl reload apache2"
 sudo systemctl list-timers | grep certbot    # confirm the renewal timer exists
 ```
+
+(The `--apache` plugin is the simpler alternative — it auto-edits vhosts — at the cost of certbot owning your vhost files.)
 
 Renewal requires port 80 to stay reachable from the internet at the edge — see [Architecture](architecture.md).
 

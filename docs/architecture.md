@@ -35,7 +35,12 @@ Public traffic terminates at Cloudflare and is pulled from the VM over HTTPS. In
 | 9090 | Cockpit | VM | LAN/Tailscale only — never published |
 | 22   | SSH | VM | LAN/Tailscale only |
 
-The edge (router or tunnel) forwards 80/443 to the VM. Nothing else is published.
+The edge (router or tunnel) forwards 80/443 to the VM. Two paths are documented here because both were live options at different points:
+
+- **pfSense port-forward** (deployed path): TCP 80/443 forwarded to the VM's internal IP. Caveat: on a consumer ISP, verify 80/443 inbound aren't blocked upstream — if they are, a Cloudflare Tunnel origin replaces the forward without changing anything inside the VM.
+- **Cloudflare Tunnel**: no open ports at all; cloudflared pulls from the VM. Same TLS chain minus the edge forward.
+
+Nothing else is published.
 
 ## TLS Chain
 
