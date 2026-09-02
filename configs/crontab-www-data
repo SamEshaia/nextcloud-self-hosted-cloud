@@ -1,0 +1,5 @@
+# Background jobs: www-data crontab entry (tarball deployment)
+# Install with: sudo -u www-data crontab -e
+# Then verify mode: sudo -u www-data php /var/www/nextcloud/occ background:cron
+
+*/5 * * * * php -f /var/www/nextcloud/cron.php
